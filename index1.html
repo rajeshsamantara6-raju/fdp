@@ -1,0 +1,436 @@
+<!-- 
+  INTRANET DASHBOARD WIDGET — for Zoho Connect
+  Paste this whole file into a Zoho Connect "Custom HTML" / Widget block.
+  Everything (HTML + CSS + JS) is self-contained — no external libraries required.
+  Edit the CONFIG data at the bottom of the <script> to plug in your own content,
+  or wire the fetchData() function to a Zoho Connect API / Deluge REST endpoint.
+-->
+
+<div id="iim-dash">
+
+  <!-- ===== Top bar ===== -->
+  <header class="dash-topbar">
+    <div class="dash-logo">IN</div>
+    <h1>Intranet Portal</h1>
+  </header>
+
+  <div class="dash-body">
+
+    <!-- ===== Sidebar ===== -->
+    <nav class="dash-sidebar">
+      <ul id="dash-nav-list">
+        <li data-page="dashboard" class="active"><span class="ic">🏠</span>Dashboard</li>
+        <li data-page="staff"><span class="ic">👥</span>Staff</li>
+        <li data-page="telephone"><span class="ic">☎️</span>Telephone</li>
+        <li data-page="circulars"><span class="ic">🔔</span>Circulars</li>
+        <li data-page="events"><span class="ic">📅</span>Events</li>
+        <li data-page="holidays"><span class="ic">🏢</span>Holidays</li>
+        <li data-page="committees"><span class="ic">🏛️</span>Committees</li>
+        <li data-page="forms"><span class="ic">📄</span>Forms &amp; Policies</li>
+        <li data-page="software"><span class="ic">⬇️</span>Software</li>
+        <li data-page="links"><span class="ic">🔗</span>Quick Links</li>
+      </ul>
+    </nav>
+
+    <!-- ===== Main content ===== -->
+    <main class="dash-main">
+      <h2 class="dash-title">Welcome to the Intranet Portal</h2>
+      <div class="dash-title-rule"></div>
+
+      <div class="dash-grid">
+
+        <!-- Left column: stat cards + quick links -->
+        <div class="dash-col dash-col-left">
+          <div class="stat-card" id="stat-active-staff">
+            <div class="stat-num">0</div>
+            <div class="stat-label">ACTIVE STAFF</div>
+          </div>
+          <div class="stat-card" id="stat-upcoming-events">
+            <div class="stat-num">0</div>
+            <div class="stat-label">UPCOMING EVENTS</div>
+          </div>
+          <div class="stat-card" id="stat-circulars">
+            <div class="stat-num">0</div>
+            <div class="stat-label">CIRCULARS</div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">Quick Links</div>
+            <div class="panel-body" id="quick-links-list"></div>
+          </div>
+        </div>
+
+        <!-- Middle column: banner + announcements + gallery -->
+        <div class="dash-col dash-col-mid">
+          <div class="banner" id="banner">
+            <button class="banner-arrow left" aria-label="Previous">&#10094;</button>
+            <div class="banner-caption" id="banner-caption">Welcome</div>
+            <button class="banner-arrow right" aria-label="Next">&#10095;</button>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">Announcements</div>
+            <div class="panel-body" id="announcements-list">
+              <p class="empty-note">No announcements yet.</p>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">Gallery</div>
+            <div class="panel-body gallery-body" id="gallery-list"></div>
+          </div>
+        </div>
+
+        <!-- Right column: events + staff highlights + software -->
+        <div class="dash-col dash-col-right">
+          <div class="panel">
+            <div class="panel-head">Events</div>
+            <div class="panel-body" id="events-list"></div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">Staff Highlights</div>
+            <div class="panel-body" id="staff-highlights-list">
+              <p class="empty-note">No highlights yet.</p>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">Software Apps</div>
+            <div class="panel-body apps-body" id="software-apps-list"></div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+</div>
+
+<style>
+  #iim-dash, #iim-dash * { box-sizing: border-box; }
+  #iim-dash {
+    --purple-900: #241b57;
+    --purple-700: #4f3bd6;
+    --purple-600: #6c4ff5;
+    --purple-500: #8266f7;
+    --purple-100: #ece8fd;
+    --purple-050: #f6f4fe;
+    --ink: #2b2540;
+    --muted: #756f8c;
+    --card-radius: 10px;
+    --shadow: 0 2px 10px rgba(52, 34, 120, 0.08);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--ink);
+    background: var(--purple-050);
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid #e3ddfb;
+  }
+
+  /* Topbar */
+  .dash-topbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: linear-gradient(90deg, var(--purple-700), var(--purple-600));
+    padding: 14px 20px;
+  }
+  .dash-logo {
+    width: 34px; height: 34px;
+    background: #fff;
+    color: var(--purple-700);
+    font-weight: 800;
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px;
+  }
+  .dash-topbar h1 {
+    color: #fff;
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0;
+    letter-spacing: .2px;
+  }
+
+  .dash-body { display: flex; align-items: stretch; min-height: 560px; }
+
+  /* Sidebar */
+  .dash-sidebar {
+    width: 210px;
+    flex-shrink: 0;
+    background: var(--purple-900);
+    padding: 14px 10px;
+  }
+  #dash-nav-list { list-style: none; margin: 0; padding: 0; }
+  #dash-nav-list li {
+    display: flex; align-items: center; gap: 10px;
+    color: #d8d4f5;
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 14px;
+    cursor: pointer;
+    margin-bottom: 4px;
+    transition: background .15s ease, color .15s ease;
+  }
+  #dash-nav-list li .ic { font-size: 15px; width: 18px; text-align: center; }
+  #dash-nav-list li:hover { background: rgba(255,255,255,.08); color: #fff; }
+  #dash-nav-list li.active {
+    background: linear-gradient(90deg, var(--purple-600), var(--purple-500));
+    color: #fff;
+    font-weight: 600;
+  }
+
+  /* Main */
+  .dash-main { flex: 1; padding: 22px 26px; min-width: 0; }
+  .dash-title {
+    text-align: center;
+    color: var(--purple-700);
+    font-weight: 700;
+    letter-spacing: .5px;
+    margin: 4px 0 12px;
+    font-size: 22px;
+  }
+  .dash-title-rule {
+    height: 3px;
+    background: linear-gradient(90deg, var(--purple-700), var(--purple-100));
+    border-radius: 3px;
+    margin-bottom: 22px;
+  }
+
+  .dash-grid {
+    display: grid;
+    grid-template-columns: 1.05fr 1.6fr 1.15fr;
+    gap: 18px;
+    align-items: start;
+  }
+  .dash-col { display: flex; flex-direction: column; gap: 16px; }
+
+  /* Stat cards */
+  .stat-card {
+    background: #fff;
+    border-radius: var(--card-radius);
+    box-shadow: var(--shadow);
+    padding: 22px 10px;
+    text-align: center;
+  }
+  .stat-num { font-size: 30px; font-weight: 800; color: var(--purple-700); }
+  .stat-label { font-size: 11px; letter-spacing: .8px; color: var(--muted); margin-top: 4px; }
+
+  /* Panels */
+  .panel { background: #fff; border-radius: var(--card-radius); box-shadow: var(--shadow); overflow: hidden; }
+  .panel-head {
+    background: linear-gradient(90deg, var(--purple-600), var(--purple-500));
+    color: #fff;
+    font-weight: 700;
+    font-size: 14.5px;
+    padding: 12px 16px;
+  }
+  .panel-body { padding: 14px 16px; }
+  .empty-note { color: var(--muted); font-style: italic; margin: 0; font-size: 13.5px; }
+
+  /* Banner */
+  .banner {
+    position: relative;
+    height: 190px;
+    border-radius: var(--card-radius);
+    overflow: hidden;
+    background: linear-gradient(135deg, #cfc4f7, #8266f7);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: var(--shadow);
+  }
+  .banner-caption {
+    background: rgba(90, 64, 214, .82);
+    color: #fff;
+    padding: 8px 22px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 15px;
+  }
+  .banner-arrow {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    background: rgba(255,255,255,.6); border: none; border-radius: 50%;
+    width: 30px; height: 30px; cursor: pointer; color: var(--purple-700); font-size: 13px;
+  }
+  .banner-arrow.left { left: 10px; }
+  .banner-arrow.right { right: 10px; }
+
+  /* Quick links */
+  .qlink {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--purple-100);
+    color: var(--purple-700);
+    font-weight: 600; font-size: 13.5px;
+    padding: 12px 14px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    text-decoration: none;
+    cursor: pointer;
+  }
+  .qlink:last-child { margin-bottom: 0; }
+  .qlink .ic { font-size: 14px; }
+
+  /* Events list */
+  .event-row { padding: 9px 0; border-bottom: 1px solid #f0edfb; font-size: 13.5px; }
+  .event-row:last-child { border-bottom: none; }
+  .event-date { font-weight: 700; color: var(--ink); margin-right: 6px; }
+  .event-name { color: var(--purple-700); font-weight: 600; }
+  .event-loc { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; }
+
+  /* Gallery */
+  .gallery-body { display: flex; gap: 6px; padding: 10px; }
+  .gallery-body img, .gallery-thumb {
+    flex: 1; height: 130px; object-fit: cover; border-radius: 6px;
+  }
+  .gallery-thumb { display:flex; align-items:center; justify-content:center; background:#e3ddfb; color:var(--purple-700); font-size:12px; }
+
+  /* Software apps */
+  .apps-body { display: flex; justify-content: space-around; padding: 16px 10px; }
+  .app-item { display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 12.5px; color: var(--ink); }
+  .app-icon {
+    width: 42px; height: 42px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; color: #fff;
+  }
+  .app-icon.word { background: #2b579a; }
+  .app-icon.excel { background: #217346; }
+  .app-icon.ppt { background: #d24726; }
+
+  /* Responsive */
+  @media (max-width: 900px) {
+    .dash-body { flex-direction: column; }
+    .dash-sidebar { width: 100%; display: flex; flex-wrap: wrap; }
+    #dash-nav-list { display: flex; flex-wrap: wrap; gap: 6px; width: 100%; }
+    #dash-nav-list li { flex: 1 1 auto; }
+    .dash-grid { grid-template-columns: 1fr; }
+  }
+</style>
+
+<script>
+(function () {
+  // ---------------------------------------------------------------
+  // CONFIG — replace this static data with a fetch() call to your
+  // Zoho Connect API / Deluge endpoint if you want live data.
+  // ---------------------------------------------------------------
+  const CONFIG = {
+    stats: { activeStaff: 0, upcomingEvents: 13, circulars: 0 },
+
+    banner: [
+      { caption: "Welcome to the Intranet" },
+      { caption: "Building a better campus, together" }
+    ],
+
+    announcements: [
+      // { title: "Placement Week begins Monday", date: "Aug 18" }
+    ],
+
+    gallery: [
+      // { url: "https://your-image-url.jpg", alt: "Campus" }
+    ],
+
+    events: [
+      { date: "Aug 22", name: "Orientation Ceremony" },
+      { date: "Sep 05", name: "Teacher's Day" },
+      { date: "Sep 12", name: "Freshers Party" },
+      { date: "Sep 18", name: "Founders' Meet" },
+      { date: "Sep 23", name: "Foundation Day", loc: "Main Auditorium" }
+    ],
+
+    staffHighlights: [
+      // { name: "Dr. A. Sharma", note: "Published in Nature journal" }
+    ],
+
+    quickLinks: [
+      { label: "Infra Complaint Portal", url: "#" },
+      { label: "Room / Seminar Booking Portal", url: "#" }
+    ],
+
+    softwareApps: [
+      { name: "Word", type: "word", icon: "W" },
+      { name: "Excel", type: "excel", icon: "X" },
+      { name: "PowerPoint", type: "ppt", icon: "P" }
+    ]
+  };
+
+  const root = document.getElementById('iim-dash');
+
+  // ---- Stat cards ----
+  root.querySelector('#stat-active-staff .stat-num').textContent = CONFIG.stats.activeStaff;
+  root.querySelector('#stat-upcoming-events .stat-num').textContent = CONFIG.stats.upcomingEvents;
+  root.querySelector('#stat-circulars .stat-num').textContent = CONFIG.stats.circulars;
+
+  // ---- Banner (simple carousel) ----
+  let bannerIdx = 0;
+  const captionEl = root.querySelector('#banner-caption');
+  function renderBanner() {
+    captionEl.textContent = CONFIG.banner[bannerIdx].caption;
+  }
+  root.querySelector('.banner-arrow.left').addEventListener('click', () => {
+    bannerIdx = (bannerIdx - 1 + CONFIG.banner.length) % CONFIG.banner.length;
+    renderBanner();
+  });
+  root.querySelector('.banner-arrow.right').addEventListener('click', () => {
+    bannerIdx = (bannerIdx + 1) % CONFIG.banner.length;
+    renderBanner();
+  });
+  renderBanner();
+  setInterval(() => {
+    bannerIdx = (bannerIdx + 1) % CONFIG.banner.length;
+    renderBanner();
+  }, 6000);
+
+  // ---- Announcements ----
+  const annEl = root.querySelector('#announcements-list');
+  if (CONFIG.announcements.length) {
+    annEl.innerHTML = CONFIG.announcements.map(a =>
+      `<div class="event-row"><span class="event-date">${a.date}</span><span class="event-name">${a.title}</span></div>`
+    ).join('');
+  }
+
+  // ---- Gallery ----
+  const galEl = root.querySelector('#gallery-list');
+  if (CONFIG.gallery.length) {
+    galEl.innerHTML = CONFIG.gallery.map(g => `<img src="${g.url}" alt="${g.alt || ''}">`).join('');
+  } else {
+    galEl.innerHTML = '<div class="gallery-thumb" style="flex:1">No images yet</div>';
+  }
+
+  // ---- Events ----
+  const evEl = root.querySelector('#events-list');
+  evEl.innerHTML = CONFIG.events.map(e => `
+    <div class="event-row">
+      <span class="event-date">${e.date}</span><span class="event-name">${e.name}</span>
+      ${e.loc ? `<span class="event-loc">${e.loc}</span>` : ''}
+    </div>
+  `).join('');
+
+  // ---- Staff highlights ----
+  const shEl = root.querySelector('#staff-highlights-list');
+  if (CONFIG.staffHighlights.length) {
+    shEl.innerHTML = CONFIG.staffHighlights.map(s =>
+      `<div class="event-row"><strong>${s.name}</strong><span class="event-loc">${s.note}</span></div>`
+    ).join('');
+  }
+
+  // ---- Quick links ----
+  const qlEl = root.querySelector('#quick-links-list');
+  qlEl.innerHTML = CONFIG.quickLinks.map(q =>
+    `<a class="qlink" href="${q.url}" target="_blank" rel="noopener"><span class="ic">🔗</span>${q.label}</a>`
+  ).join('');
+
+  // ---- Software apps ----
+  const appEl = root.querySelector('#software-apps-list');
+  appEl.innerHTML = CONFIG.softwareApps.map(a =>
+    `<div class="app-item"><div class="app-icon ${a.type}">${a.icon}</div>${a.name}</div>`
+  ).join('');
+
+  // ---- Sidebar nav (swap page label + active state; hook up routing as needed) ----
+  root.querySelectorAll('#dash-nav-list li').forEach(li => {
+    li.addEventListener('click', () => {
+      root.querySelectorAll('#dash-nav-list li').forEach(x => x.classList.remove('active'));
+      li.classList.add('active');
+      // Hook: navigate to a different Zoho Connect page/section here, e.g.:
+      // window.location.href = '/portal/yourportal/app/streams/' + li.dataset.page;
+    });
+  });
+})();
+</script>
